@@ -1,0 +1,19 @@
+{
+  "signIn": {
+    "method": "POST",
+    "url": "/login",
+    "contentType": "application/x-www-form-urlencoded",
+    "body": {
+      "agency": "ABC",
+      "username": "admin",
+      "password": "demo1234"
+    },
+    "successRedirect": "/"
+  },
+  "credentials": {
+    "agency": "ABC",
+    "username": "admin",
+    "password": "demo1234"
+  },
+  "notes": "Demo tenant ABC. Sign in posts form fields agency, username and password to /login and sets the ippms.sid session cookie. Client portal account: kopje.user with the same password. Platform console: leave agency blank and use username platform."
+}

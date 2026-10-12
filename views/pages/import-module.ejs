@@ -1,0 +1,102 @@
+<%- include('../partials/head', {
+  subtitle: 'Validate first, then commit',
+  headerActions: '<a class="btn" href="/import">All modules</a>'
+}) %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Upload a CSV</h2></div>
+      <div class="card-body">
+        <form method="post" action="/import/<%= mod.slug %>" enctype="multipart/form-data">
+          <div class="field">
+            <label for="file">CSV file</label>
+            <input type="file" id="file" name="file" accept=".csv,text/csv" required>
+            <div class="hint">
+              Up to <%= number(settings.import_max_rows) %> rows and
+              <%= Math.round(settings.import_max_bytes / 1048576) %> MB.
+            </div>
+          </div>
+          <div class="field">
+            <label>Mode</label>
+            <label class="check"><input type="radio" name="mode" value="dry_run" checked> Dry run, validate only</label>
+            <label class="check"><input type="radio" name="mode" value="commit"> Commit, write the rows</label>
+          </div>
+          <div class="field">
+            <label class="check">
+              <input type="checkbox" name="skip_invalid"> Skip invalid rows and commit the rest
+            </label>
+            <div class="hint">Left off, a commit runs as one transaction and aborts on the first invalid row.</div>
+          </div>
+          <button class="btn btn-primary" type="submit">Start</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Templates</h2></div>
+      <div class="card-body">
+        <div class="actions">
+          <a class="btn" href="/import/<%= mod.slug %>/template.csv?variant=blank">Blank</a>
+          <a class="btn" href="/import/<%= mod.slug %>/template.csv?variant=sample">With sample row</a>
+          <% if (can('data.export')) { %>
+            <a class="btn" href="/import/<%= mod.slug %>/template.csv?variant=data">Existing data</a>
+          <% } %>
+        </div>
+        <p class="hint">The existing data variant round-trips: edit it and upload it back with action UPDATE.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Columns</h2></div>
+      <div class="card-body tight">
+        <table class="table">
+          <thead><tr><th>Column</th><th>Rule</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">action</td><td>CREATE or UPDATE</td></tr>
+            <tr><td class="mono">existing_reference</td><td>Required for UPDATE, empty for CREATE</td></tr>
+            <% mod.fields.forEach(function (f) { %>
+              <tr>
+                <td class="mono"><%= f.name %></td>
+                <td class="small">
+                  <%= f.label %><%= f.required ? ', required' : '' %><%
+                  %><%= f.type === 'date' ? ', yyyy-MM-dd' : '' %><%
+                  %><%= f.type === 'classes' ? ', 1 to 45 separated with ;' : '' %><%
+                  %><%= f.type === 'countries' ? ', country names separated with ;' : '' %><%
+                  %><%= f.type === 'select' ? ', controlled list' : '' %>
+                </td>
+              </tr>
+            <% }) %>
+            <tr><td class="mono">client_code</td><td>Must exist in this agency</td></tr>
+            <tr><td class="mono">created_by</td><td>Ignored on import</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (jobs.length > 0) { %>
+      <div class="card">
+        <div class="card-head"><h2>Recent runs for this module</h2></div>
+        <div class="card-body tight">
+          <table class="table">
+            <thead><tr><th>Started</th><th>Mode</th><th>Result</th><th>Status</th></tr></thead>
+            <tbody>
+              <% jobs.forEach(function (job) { %>
+                <tr>
+                  <td class="small"><a href="/import/jobs/<%= job.id %>"><%= dt(job.started_at) %></a></td>
+                  <td><%= job.mode %></td>
+                  <td class="small"><%= job.rows_inserted %>/<%= job.rows_updated %>/<%= job.rows_failed %></td>
+                  <td><span class="pill <%= statusClass(job.status) %>"><%= job.status %></span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
