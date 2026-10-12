@@ -1,0 +1,53 @@
+<%- include('../partials/head', { subtitle: user.username }) %>
+
+<% if (error) { %><div class="alert error"><%= error %></div><% } %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Change password</h2></div>
+      <div class="card-body">
+        <form method="post" action="/account/password">
+          <div class="field">
+            <label for="current_password">Current password</label>
+            <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+          </div>
+          <div class="field">
+            <label for="new_password">New password</label>
+            <input type="password" id="new_password" name="new_password" required autocomplete="new-password">
+            <div class="hint">At least 8 characters with a letter and a digit.</div>
+          </div>
+          <div class="field">
+            <label for="confirm_password">Repeat new password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+          </div>
+          <button class="btn btn-primary" type="submit">Change password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Your access</h2></div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Username</dt><dd class="mono"><%= user.username %></dd>
+          <dt>Name</dt><dd><%= user.fullName || '-' %></dd>
+          <dt>Email</dt><dd><%= user.email || '-' %></dd>
+          <dt>Account type</dt><dd><%= user.userType %></dd>
+          <dt>Roles</dt><dd><%= user.roles.join(', ') %></dd>
+          <% if (user.tenantName) { %>
+            <dt>Agency</dt><dd><%= user.tenantName %> (<%= user.tenantInitials %>)</dd>
+          <% } %>
+          <% if (user.clientName) { %>
+            <dt>Client</dt><dd><%= user.clientName %> (<%= user.clientCode %>)</dd>
+            <dt>Session timeout</dt><dd>30 minutes idle</dd>
+          <% } %>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

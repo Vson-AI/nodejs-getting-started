@@ -1,0 +1,122 @@
+<%
+var actions = ''
+if (can('ip.update')) actions += '<a class="btn" href="/ip/' + mod.slug + '/' + record.id + '/edit">Edit</a>'
+if (can('docket.write')) actions += '<a class="btn" href="/docket/new?ip_type=' + mod.ipType + '&ip_record_ref=' + encodeURIComponent(record.three_eyes_ref) + '">Add docket entry</a>'
+%>
+<%- include('../partials/head', { subtitle: record.title, headerActions: actions }) %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2><%= mod.label %> record</h2>
+        <span class="pill <%= statusClass(record.status) %>"><%= record.status %></span>
+      </div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Reference</dt><dd class="ref"><%= record.three_eyes_ref %></dd>
+          <dt>Client</dt>
+          <dd>
+            <% if (record.client_name) { %>
+              <%= record.client_name %> <span class="muted">(<%= record.client_code %>)</span>
+            <% } else { %><span class="muted">Not assigned</span><% } %>
+          </dd>
+          <% mod.fields.forEach(function (f) { %>
+            <% if (f.name === 'status') return %>
+            <dt><%= f.label %></dt>
+            <dd>
+              <% if (f.type === 'date') { %>
+                <%= d(record[f.name]) || '-' %>
+                <% if (f.name === 'expiry_date' && record.expiry_date) { var n = daysUntil(record.expiry_date) %>
+                  <span class="pill <%= n < 0 ? 'bad' : (n < 90 ? 'warn' : '') %>">
+                    <%= n < 0 ? Math.abs(n) + ' days ago' : 'in ' + n + ' days' %>
+                  </span>
+                <% } %>
+              <% } else if (f.type === 'countries') { %>
+                <% (record.designated_states || []).forEach(function (code) { %>
+                  <span class="tag"><%= countryNames.get(code) || code %></span>
+                <% }) %>
+                <% if (!(record.designated_states || []).length) { %>-<% } %>
+              <% } else if (f.type === 'classes') { %>
+                <% (record.classes || []).forEach(function (c) { %><span class="tag"><%= c %></span><% }) %>
+                <% if (!(record.classes || []).length) { %>-<% } %>
+              <% } else { %>
+                <%= listValue(record[f.name]) || '-' %>
+              <% } %>
+            </dd>
+          <% }) %>
+          <dt>Created</dt><dd><%= dt(record.created_at) %> by <%= record.created_by || 'unknown' %></dd>
+          <dt>Last updated</dt><dd><%= dt(record.updated_at) %> by <%= record.updated_by || 'unknown' %></dd>
+        </dl>
+
+        <% if (can('ip.delete')) { %>
+          <form method="post" action="/ip/<%= mod.slug %>/<%= record.id %>/delete" class="form-foot"
+                onsubmit="return confirm('Delete <%= record.three_eyes_ref %>? The reference number is retired, not reused.')">
+            <button type="submit" class="btn btn-danger">Delete record</button>
+            <span class="muted small">Deleting does not free the sequence number.</span>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Docket entries</h2>
+        <span class="muted small"><%= dockets.length %> linked</span>
+      </div>
+      <div class="card-body tight">
+        <% if (dockets.length === 0) { %>
+          <div class="empty">No docket entries for this record.</div>
+        <% } else { %>
+          <table class="table">
+            <thead><tr><th>Due</th><th>Entry</th><th>Status</th></tr></thead>
+            <tbody>
+              <% dockets.forEach(function (row) { %>
+                <tr>
+                  <td class="nowrap">
+                    <span class="pill <%= row.completed ? 'ok' : (daysUntil(row.due_date) < 0 ? 'bad' : '') %>">
+                      <%= d(row.due_date) %>
+                    </span>
+                  </td>
+                  <td><a href="/docket/<%= row.id %>"><%= row.title %></a></td>
+                  <td><%= row.completed ? 'Completed' : (row.status || 'Open') %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (can('audit.view')) { %>
+      <div class="card">
+        <div class="card-head">
+          <h2>History</h2>
+          <a class="btn btn-sm" href="/audit?module=<%= mod.ipType.toUpperCase() %>&record_id=<%= record.id %>">Full trail</a>
+        </div>
+        <div class="card-body tight">
+          <% if (history.length === 0) { %>
+            <div class="empty">No audit entries yet.</div>
+          <% } else { %>
+            <table class="table">
+              <thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead>
+              <tbody>
+                <% history.forEach(function (row) { %>
+                  <tr>
+                    <td class="nowrap small"><%= dt(row.created_at) %></td>
+                    <td><%= row.username %></td>
+                    <td><span class="pill info"><%= row.action %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

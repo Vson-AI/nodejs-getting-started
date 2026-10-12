@@ -1,0 +1,42 @@
+<%- include('../partials/head', {
+  subtitle: 'Every validation and commit run in this agency',
+  headerActions: '<a class="btn" href="/import">Modules</a>'
+}) %>
+
+<div class="card">
+  <div class="card-body tight">
+    <% if (jobs.length === 0) { %>
+      <div class="empty">No imports have been run yet.</div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th class="num">Job</th><th>Started</th><th>Module</th><th>File</th><th>User</th>
+                <th>Mode</th><th class="num">Read</th><th class="num">Created</th>
+                <th class="num">Updated</th><th class="num">Skipped</th><th class="num">Failed</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <% jobs.forEach(function (job) { %>
+              <tr>
+                <td class="num"><a href="/import/jobs/<%= job.id %>"><%= job.id %></a></td>
+                <td class="nowrap small"><%= dt(job.started_at) %></td>
+                <td><%= job.module %></td>
+                <td class="small"><%= job.file_name %></td>
+                <td class="small"><%= job.username %></td>
+                <td><span class="pill <%= job.mode === 'COMMIT' ? 'info' : '' %>"><%= job.mode %></span></td>
+                <td class="num"><%= job.rows_total %></td>
+                <td class="num"><%= job.rows_inserted %></td>
+                <td class="num"><%= job.rows_updated %></td>
+                <td class="num"><%= job.rows_skipped %></td>
+                <td class="num"><%= job.rows_failed %></td>
+                <td><span class="pill <%= statusClass(job.status) %>"><%= job.status %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

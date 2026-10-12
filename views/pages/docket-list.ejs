@@ -1,0 +1,114 @@
+<%
+var actions = ''
+if (can('docket.write')) actions += '<a class="btn btn-primary" href="/docket/new">Add entry</a>'
+if (can('template.download')) actions += '<a class="btn" href="/import/docket/template.csv?variant=blank">Template</a>'
+if (can('data.export')) actions += '<a class="btn" href="/docket/export.csv' + qs(filters, { page: null }) + '">Export CSV</a>'
+if (can('import.run')) actions += '<a class="btn" href="/import/docket">Import</a>'
+var view = filters.view || ''
+%>
+<%- include('../partials/head', { subtitle: 'Deadlines and actions across the portfolio', headerActions: actions }) %>
+
+<div class="actions" style="margin-bottom:12px">
+  <a class="btn btn-sm <%= view === '' && !filters.completed ? 'btn-primary' : '' %>" href="/docket">All</a>
+  <a class="btn btn-sm <%= view === 'upcoming' ? 'btn-primary' : '' %>" href="/docket?view=upcoming&amp;days=30">Due in 30 days</a>
+  <a class="btn btn-sm <%= view === 'overdue' ? 'btn-primary' : '' %>" href="/docket?view=overdue">Overdue</a>
+  <a class="btn btn-sm <%= filters.completed === 'no' ? 'btn-primary' : '' %>" href="/docket?completed=no">Open</a>
+  <a class="btn btn-sm <%= filters.completed === 'yes' ? 'btn-primary' : '' %>" href="/docket?completed=yes">Completed</a>
+</div>
+
+<div class="card">
+  <form method="get" class="filters">
+    <input type="hidden" name="view" value="<%= view %>">
+    <div class="field">
+      <label for="q">Search</label>
+      <input type="search" id="q" name="q" value="<%= filters.q || '' %>" placeholder="Title, reference, assignee">
+    </div>
+    <div class="field">
+      <label for="ip_type">IP type</label>
+      <select id="ip_type" name="ip_type">
+        <option value="">Any type</option>
+        <% ipModules.forEach(function (m) { %>
+          <option value="<%= m.ipType %>" <%= filters.ip_type === m.ipType ? 'selected' : '' %>><%= m.label %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="">Any status</option>
+        <% statuses.forEach(function (s) { %>
+          <option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="priority">Priority</label>
+      <select id="priority" name="priority">
+        <option value="">Any</option>
+        <% ['Low', 'Medium', 'High'].forEach(function (p) { %>
+          <option value="<%= p %>" <%= filters.priority === p ? 'selected' : '' %>><%= p %></option>
+        <% }) %>
+      </select>
+    </div>
+    <% if (!isClient) { %>
+      <div class="field">
+        <label for="client">Client</label>
+        <select id="client" name="client">
+          <option value="">Any client</option>
+          <% clients.forEach(function (c) { %>
+            <option value="<%= c.id %>" <%= String(filters.client) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+    <% } %>
+    <div class="field">
+      <label for="from">Due from</label>
+      <input type="date" id="from" name="from" value="<%= filters.from || '' %>">
+    </div>
+    <div class="field">
+      <label for="to">Due to</label>
+      <input type="date" id="to" name="to" value="<%= filters.to || '' %>">
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Apply</button>
+      <a class="btn" href="/docket">Clear</a>
+    </div>
+  </form>
+
+  <div class="card-body tight">
+    <% if (list.rows.length === 0) { %>
+      <div class="empty">No docket entries match these filters.</div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Due</th><th>Entry</th><th>Linked record</th><th>Assignee</th>
+              <th>Priority</th><th>Status</th><% if (!isClient) { %><th>Client</th><% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% list.rows.forEach(function (row) { var late = !row.completed && daysUntil(row.due_date) < 0 %>
+              <tr>
+                <td class="nowrap">
+                  <span class="pill <%= row.completed ? 'ok' : (late ? 'bad' : (daysUntil(row.due_date) <= 14 ? 'warn' : '')) %>">
+                    <%= d(row.due_date) %>
+                  </span>
+                </td>
+                <td><a href="/docket/<%= row.id %>"><%= row.title %></a></td>
+                <td class="ref"><%= row.ip_record_ref || '' %></td>
+                <td><%= row.assigned_to || '' %></td>
+                <td><span class="pill <%= priorityClass(row.priority) %>"><%= row.priority %></span></td>
+                <td><%= row.completed ? 'Completed' : (row.status || 'Open') %></td>
+                <% if (!isClient) { %><td><%= row.client_name || '' %></td><% } %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+  <%- include('../partials/pagination', { list: list, page: page, query: filters }) %>
+</div>
+
+<%- include('../partials/foot') %>

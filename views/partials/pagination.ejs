@@ -1,0 +1,13 @@
+<% var pages = Math.max(Math.ceil(list.total / list.limit), 1) %>
+<div class="pagination">
+  <span>
+    <%= list.total === 0 ? 'No rows' : (list.offset + 1) + ' to ' + Math.min(list.offset + list.limit, list.total) + ' of ' + number(list.total) %>
+  </span>
+  <span style="flex:1"></span>
+  <% if (page > 1) { %>
+    <a class="btn btn-sm" href="<%= qs(query, { page: page - 1 }) %>">Previous</a>
+  <% } %>
+  <% if (page < pages) { %>
+    <a class="btn btn-sm" href="<%= qs(query, { page: page + 1 }) %>">Next</a>
+  <% } %>
+</div>
