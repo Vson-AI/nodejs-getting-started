@@ -1,0 +1,87 @@
+<%
+var actions = ''
+if (can('data.export')) actions += '<a class="btn" href="/reports/' + name + '.csv' + qs(filters) + '">Export CSV</a>'
+actions += '<button class="btn" onclick="window.print()">Print</button>'
+actions += '<a class="btn" href="/reports">All reports</a>'
+%>
+<%- include('../partials/head', {
+  subtitle: (isClient ? user.clientName : user.tenantName) + ' · generated ' + dt(new Date()),
+  headerActions: actions
+}) %>
+
+<% if (report.needsClient) { %>
+  <div class="alert warn">Choose a client on the reports page to run this snapshot.</div>
+<% } else if (name === 'portfolio') { %>
+  <div class="row">
+    <% report.groups.forEach(function (group) { %>
+      <div class="col">
+        <div class="card">
+          <div class="card-head">
+            <h2><%= group.module.plural %></h2>
+            <span class="pill info"><%= number(group.total) %></span>
+          </div>
+          <div class="card-body tight">
+            <% if (group.byStatus.length === 0) { %>
+              <div class="empty">None on file.</div>
+            <% } else { %>
+              <table class="table">
+                <tbody>
+                  <% group.byStatus.forEach(function (s) { %>
+                    <tr>
+                      <td><span class="pill <%= statusClass(s.status) %>"><%= s.status %></span></td>
+                      <td class="num"><%= number(s.n) %></td>
+                      <td style="width:50%">
+                        <div class="bar"><span style="width:<%= group.total ? Math.round(s.n / group.total * 100) : 0 %>%"></span></div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="card">
+    <div class="card-head">
+      <h2><%= meta.title %></h2>
+      <span class="muted small"><%= number(report.rows.length) %> row(s)</span>
+    </div>
+    <div class="card-body tight">
+      <% if (report.rows.length === 0) { %>
+        <div class="empty">Nothing to report.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><% report.columns.forEach(function (c) { %><th><%= c.replace(/_/g, ' ') %></th><% }) %></tr>
+            </thead>
+            <tbody>
+              <% report.rows.forEach(function (row) { %>
+                <tr>
+                  <% report.columns.forEach(function (c) { %>
+                    <td class="<%= c.endsWith('_date') ? 'nowrap' : '' %>">
+                      <% if (c === 'status') { %>
+                        <span class="pill <%= statusClass(row.status) %>"><%= row.status %></span>
+                      <% } else if (c.endsWith('_date')) { %>
+                        <%= d(row[c]) %>
+                      <% } else if (c === 'three_eyes_ref' || c === 'ip_record_ref') { %>
+                        <span class="ref"><%= row[c] || '' %></span>
+                      <% } else { %>
+                        <%= listValue(row[c]) %>
+                      <% } %>
+                    </td>
+                  <% }) %>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/foot') %>
