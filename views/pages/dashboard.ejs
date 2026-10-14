@@ -1,0 +1,140 @@
+<%- include('../partials/head', { subtitle: user.clientName ? user.clientName + ' portfolio' : user.tenantName }) %>
+
+<div class="kpis">
+  <% modules.forEach(function (m) { %>
+    <a class="kpi" href="/ip/<%= m.slug %>">
+      <div class="kpi-value"><%= number(summary.counts[m.slug]) %></div>
+      <div class="kpi-label"><%= m.plural %></div>
+    </a>
+  <% }) %>
+</div>
+
+<div class="kpis" style="margin-top:12px">
+  <a class="kpi" href="/docket?completed=no">
+    <div class="kpi-value"><%= number(summary.openDocket) %></div>
+    <div class="kpi-label">Open docket entries</div>
+  </a>
+  <a class="kpi warn" href="/docket?view=upcoming&amp;days=<%= summary.lookaheadDays %>">
+    <div class="kpi-value"><%= number(summary.upcomingDocket) %></div>
+    <div class="kpi-label">Due within <%= summary.lookaheadDays %> days</div>
+  </a>
+  <a class="kpi alert" href="/docket?view=overdue">
+    <div class="kpi-value"><%= number(summary.overdueDocket) %></div>
+    <div class="kpi-label">Overdue</div>
+  </a>
+  <a class="kpi warn" href="/reports/expiring?days=<%= summary.expiryDays %>">
+    <div class="kpi-value"><%= number(summary.expiring) %></div>
+    <div class="kpi-label">Expiring within <%= summary.expiryDays %> days</div>
+  </a>
+</div>
+
+<div class="row" style="margin-top:16px">
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Overdue docket</h2>
+        <a href="/reports/overdue" class="btn btn-sm">Full report</a>
+      </div>
+      <div class="card-body tight">
+        <% if (overdue.length === 0) { %>
+          <div class="empty">Nothing overdue.</div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Due</th><th>Entry</th><th>Reference</th><th>Owner</th></tr></thead>
+              <tbody>
+                <% overdue.forEach(function (row) { %>
+                  <tr>
+                    <td class="nowrap"><span class="pill bad"><%= d(row.due_date) %></span></td>
+                    <td><a href="/docket/<%= row.id %>"><%= row.title %></a></td>
+                    <td class="ref"><%= row.ip_record_ref || '' %></td>
+                    <td><%= row.assigned_to || '' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Due in the next <%= summary.lookaheadDays %> days</h2>
+        <a href="/reports/upcoming" class="btn btn-sm">Full report</a>
+      </div>
+      <div class="card-body tight">
+        <% if (upcoming.length === 0) { %>
+          <div class="empty">No deadlines in this window.</div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Due</th><th>Entry</th><th>Reference</th><th>Priority</th></tr></thead>
+              <tbody>
+                <% upcoming.forEach(function (row) { %>
+                  <tr>
+                    <td class="nowrap"><%= d(row.due_date) %></td>
+                    <td><a href="/docket/<%= row.id %>"><%= row.title %></a></td>
+                    <td class="ref"><%= row.ip_record_ref || '' %></td>
+                    <td><span class="pill <%= priorityClass(row.priority) %>"><%= row.priority %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Expiring rights</h2>
+        <a href="/reports/expiring?days=<%= summary.expiryDays %>" class="btn btn-sm">Full report</a>
+      </div>
+      <div class="card-body tight">
+        <% if (expiring.length === 0) { %>
+          <div class="empty">Nothing expires in the next <%= summary.expiryDays %> days.</div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Expiry</th><th>Reference</th><th>Title</th><th>Client</th></tr></thead>
+              <tbody>
+                <% expiring.forEach(function (row) { %>
+                  <tr>
+                    <td class="nowrap">
+                      <span class="pill <%= daysUntil(row.expiry_date) < 30 ? 'bad' : 'warn' %>">
+                        <%= d(row.expiry_date) %>
+                      </span>
+                    </td>
+                    <td class="ref"><%= row.three_eyes_ref %></td>
+                    <td><%= row.title %></td>
+                    <td><%= row.client_name || '' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Portfolio</h2></div>
+      <div class="card-body">
+        <div class="dl">
+          <dt>Rights on file</dt><dd class="strong"><%= number(summary.totalIp) %></dd>
+          <dt>Reference format</dt><dd class="ref"><%= user.tenantInitials %>/&lt;type&gt;/&lt;year&gt;/&lt;sequence&gt;</dd>
+          <% if (!isClient) { %>
+            <dt>Agency</dt><dd><%= user.tenantName %></dd>
+          <% } else { %>
+            <dt>Client</dt><dd><%= user.clientName %></dd>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
