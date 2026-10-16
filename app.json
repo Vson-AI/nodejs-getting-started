@@ -1,7 +1,25 @@
 {
-  "name": "Start on Heroku: Node.js",
-  "description": "A barebones Node.js app using Express 4",
-  "repository": "https://github.com/heroku/nodejs-getting-started",
-  "keywords": ["node", "express", "heroku"],
-  "image": "heroku/nodejs"
+  "name": "IP-PMS",
+  "description": "Multi-tenant IP portfolio management system with a client portal and bulk CSV import",
+  "keywords": [
+    "node",
+    "express",
+    "postgres",
+    "intellectual-property"
+  ],
+  "image": "heroku/nodejs",
+  "env": {
+    "APP_ENCRYPTION_KEY": {
+      "description": "32 byte hex key that encrypts tenant SMTP passwords",
+      "generator": "secret"
+    },
+    "SESSION_SECRET": {
+      "description": "Signing key for session cookies",
+      "generator": "secret"
+    },
+    "AUDIT_RETENTION_YEARS": {
+      "description": "Years of audit history kept before archiving",
+      "value": "5"
+    }
+  }
 }

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | IP-PMS</title>
+  <link rel="stylesheet" href="/stylesheets/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232b4ecb'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='700' fill='white' text-anchor='middle'>IP</text></svg>">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><%= user.tenantInitials ? user.tenantInitials.slice(0, 3) : 'IP' %></div>
+      <div>
+        <div class="brand-name"><%= user.tenantName || 'Platform console' %></div>
+        <div class="brand-sub"><%= user.tenantInitials ? user.tenantInitials + ' portfolio' : 'IP-PMS' %></div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <% if (isPlatformAdmin) { %>
+        <div class="nav-group">
+          <div class="nav-label">Platform</div>
+          <a href="/platform" class="<%= activeNav === 'platform' ? 'active' : '' %>">
+            <span class="nav-code">T</span> Tenants
+          </a>
+        </div>
+      <% } else { %>
+        <div class="nav-group">
+          <a href="/" class="<%= activeNav === 'dashboard' ? 'active' : '' %>">
+            <span class="nav-code">D</span> Dashboard
+          </a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Rights</div>
+          <% ipModules.forEach(function (m) { %>
+            <a href="/ip/<%= m.slug %>" class="<%= activeNav === m.slug ? 'active' : '' %>">
+              <span class="nav-code"><%= m.typeCode %></span> <%= m.plural %>
+            </a>
+          <% }) %>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Work</div>
+          <a href="/docket" class="<%= activeNav === 'docket' ? 'active' : '' %>">
+            <span class="nav-code">K</span> Docket
+          </a>
+          <a href="/reports" class="<%= activeNav === 'reports' ? 'active' : '' %>">
+            <span class="nav-code">R</span> Reports
+          </a>
+          <% if (can('audit.view')) { %>
+            <a href="/audit" class="<%= activeNav === 'audit' ? 'active' : '' %>">
+              <span class="nav-code">A</span> Audit trail
+            </a>
+          <% } %>
+          <% if (can('import.run')) { %>
+            <a href="/import" class="<%= activeNav === 'import' ? 'active' : '' %>">
+              <span class="nav-code">I</span> Import
+            </a>
+          <% } %>
+        </div>
+
+        <% if (can('client.manage') || can('user.manage') || can('settings.manage')) { %>
+          <div class="nav-group">
+            <div class="nav-label">Administration</div>
+            <% if (can('client.manage')) { %>
+              <a href="/clients" class="<%= activeNav === 'clients' ? 'active' : '' %>">
+                <span class="nav-code">C</span> Clients
+              </a>
+            <% } %>
+            <% if (can('user.manage')) { %>
+              <a href="/users" class="<%= activeNav === 'users' ? 'active' : '' %>">
+                <span class="nav-code">U</span> Users
+              </a>
+            <% } %>
+            <% if (can('settings.manage')) { %>
+              <a href="/settings" class="<%= activeNav === 'settings' ? 'active' : '' %>">
+                <span class="nav-code">S</span> Settings
+              </a>
+            <% } %>
+          </div>
+        <% } %>
+      <% } %>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="who"><%= user.fullName || user.username %></div>
+      <div class="role">
+        <%= user.roles.join(', ') %><%= user.clientName ? ' · ' + user.clientName : '' %>
+      </div>
+      <form method="post" action="/logout">
+        <a href="/account" class="linkish">My account</a>
+        <button type="submit" class="linkish" style="margin-left:10px">Sign out</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1><%= title %></h1>
+        <% if (typeof subtitle !== 'undefined' && subtitle) { %>
+          <div class="crumb"><%= subtitle %></div>
+        <% } %>
+      </div>
+      <div class="actions">
+        <%- typeof headerActions !== 'undefined' ? headerActions : '' %>
+      </div>
+    </header>
+
+    <div class="content">
+      <% flash.forEach(function (item) { %>
+        <div class="alert <%= item.type %>"><%= item.message %></div>
+      <% }) %>

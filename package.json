@@ -1,7 +1,7 @@
 {
-  "name": "nodejs-getting-started",
+  "name": "ip-pms",
   "private": true,
-  "description": "A sample Node.js app using Express",
+  "description": "Multi-tenant SaaS IP portfolio management system with a client portal and bulk CSV import",
   "engines": {
     "node": "22.x || 24.x || 26.x",
     "npm": "12.x"
@@ -9,23 +9,29 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "jest"
+    "db:migrate": "node src/db/migrate.js",
+    "db:seed": "node src/db/seed.js",
+    "test": "jest --runInBand"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-pg-simple": "^10.0.0",
     "ejs": "^6.0.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.1.0",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "jest": "^30.4.2"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/heroku/nodejs-getting-started"
-  },
   "keywords": [
-    "node",
-    "heroku",
-    "express"
+    "intellectual-property",
+    "multi-tenant",
+    "saas",
+    "docketing",
+    "postgres"
   ],
   "license": "MIT"
 }

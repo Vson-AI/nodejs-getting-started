@@ -1,0 +1,55 @@
+<%
+function value (name) { return values[name] == null ? '' : String(values[name]) }
+function errorFor (name) {
+  var hit = errors.find(function (e) { return e.column === name })
+  return hit ? hit.message : null
+}
+var fields = [
+  { name: 'code', label: 'Client code *', hint: 'Unique within this agency. Used in CSV imports.' },
+  { name: 'name', label: 'Client name *' },
+  { name: 'contact_person', label: 'Contact person' },
+  { name: 'email', label: 'Email' },
+  { name: 'phone', label: 'Phone' },
+  { name: 'tax_number', label: 'Tax or VAT number' },
+  { name: 'address', label: 'Address', wide: true },
+  { name: 'notes', label: 'Notes', wide: true, textarea: true }
+]
+%>
+<%- include('../partials/head') %>
+
+<% if (errors.length > 0) { %>
+  <div class="alert error">
+    <ul><% errors.forEach(function (e) { %><li><%= e.message %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<form method="post" action="<%= client ? '/clients/' + client.id : '/clients' %>">
+  <div class="card">
+    <div class="card-head"><h2>Client details</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <% fields.forEach(function (f) { %>
+          <div class="field <%= f.wide ? 'wide' : '' %>">
+            <label for="f_<%= f.name %>"><%= f.label %></label>
+            <% if (f.textarea) { %>
+              <textarea id="f_<%= f.name %>" name="<%= f.name %>"><%= value(f.name) %></textarea>
+            <% } else { %>
+              <input type="text" id="f_<%= f.name %>" name="<%= f.name %>" value="<%= value(f.name) %>">
+            <% } %>
+            <% if (errorFor(f.name)) { %>
+              <div class="hint" style="color:var(--red)"><%= errorFor(f.name) %></div>
+            <% } else if (f.hint) { %>
+              <div class="hint"><%= f.hint %></div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-primary" type="submit"><%= client ? 'Save changes' : 'Create client' %></button>
+        <a class="btn" href="<%= client ? '/clients/' + client.id : '/clients' %>">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<%- include('../partials/foot') %>

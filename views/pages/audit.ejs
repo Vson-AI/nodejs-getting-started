@@ -1,0 +1,105 @@
+<%
+var actions = ''
+if (can('audit.export')) actions += '<a class="btn" href="/audit/export.csv' + qs(filters, { page: null }) + '">Export CSV</a>'
+%>
+<%- include('../partials/head', {
+  subtitle: filters.archived === '1' ? 'Archived entries older than five years' : 'Every change, with before and after values',
+  headerActions: actions
+}) %>
+
+<div class="actions" style="margin-bottom:12px">
+  <a class="btn btn-sm <%= filters.archived === '1' ? '' : 'btn-primary' %>" href="/audit">Current</a>
+  <a class="btn btn-sm <%= filters.archived === '1' ? 'btn-primary' : '' %>" href="/audit?archived=1">Archive</a>
+</div>
+
+<div class="card">
+  <form method="get" class="filters">
+    <% if (filters.archived === '1') { %><input type="hidden" name="archived" value="1"><% } %>
+    <div class="field">
+      <label for="module">Module</label>
+      <select id="module" name="module">
+        <option value="">Any module</option>
+        <% modules.forEach(function (m) { %>
+          <option value="<%= m %>" <%= filters.module === m ? 'selected' : '' %>><%= m %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="record_id">Record id</label>
+      <input type="text" id="record_id" name="record_id" value="<%= filters.record_id || '' %>">
+    </div>
+    <div class="field">
+      <label for="username">User</label>
+      <input type="text" id="username" name="username" value="<%= filters.username || '' %>">
+    </div>
+    <div class="field">
+      <label for="client">Client</label>
+      <select id="client" name="client">
+        <option value="">Any client</option>
+        <% clients.forEach(function (c) { %>
+          <option value="<%= c.id %>" <%= String(filters.client) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="from">From</label>
+      <input type="date" id="from" name="from" value="<%= filters.from || '' %>">
+    </div>
+    <div class="field">
+      <label for="to">To</label>
+      <input type="date" id="to" name="to" value="<%= filters.to || '' %>">
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Apply</button>
+      <a class="btn" href="/audit">Clear</a>
+    </div>
+  </form>
+
+  <div class="card-body tight">
+    <% if (result.rows.length === 0) { %>
+      <div class="empty">No audit entries match these filters.</div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>When</th><th>User</th><th>Action</th><th>Module</th><th>Record</th><th>Change</th></tr>
+          </thead>
+          <tbody>
+            <% result.rows.forEach(function (row) { var changes = diffValues(row.old_value, row.new_value) %>
+              <tr>
+                <td class="nowrap small"><%= dt(row.created_at) %></td>
+                <td><%= row.username %></td>
+                <td><span class="pill <%= row.action === 'DELETE' ? 'bad' : (row.action === 'CREATE' ? 'ok' : 'info') %>"><%= row.action %></span></td>
+                <td class="small"><%= row.module %></td>
+                <td class="ref"><%= row.record_ref || row.record_id || '' %></td>
+                <td class="diff">
+                  <% if (row.action === 'CREATE' || row.action === 'DELETE') { %>
+                    <span class="muted"><%= changes.length %> field(s)</span>
+                  <% } else if (changes.length === 0) { %>
+                    <span class="muted">No field changes</span>
+                  <% } else { %>
+                    <% changes.slice(0, 4).forEach(function (c) { %>
+                      <div>
+                        <%= c.key %>:
+                        <span class="was"><%= JSON.stringify(c.before) %></span>
+                        <span class="now"><%= JSON.stringify(c.after) %></span>
+                      </div>
+                    <% }) %>
+                    <% if (changes.length > 4) { %>
+                      <div class="muted"><%= changes.length - 4 %> more</div>
+                    <% } %>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+  <%- include('../partials/pagination', { list: result, page: page, query: filters }) %>
+</div>
+
+<p class="hint">Entries are written by database triggers and cannot be edited or deleted from the application.</p>
+
+<%- include('../partials/foot') %>

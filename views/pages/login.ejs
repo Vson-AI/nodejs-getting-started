@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | IP-PMS</title>
+  <link rel="stylesheet" href="/stylesheets/app.css">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <% if (branding && branding.brand_logo_url) { %>
+        <img src="<%= branding.brand_logo_url %>" alt="<%= branding.legal_name %>" class="login-logo">
+      <% } else { %>
+        <div class="brand-mark"><%= branding ? branding.initials.slice(0, 3) : 'IP' %></div>
+      <% } %>
+      <div>
+        <div class="login-title"><%= branding ? branding.legal_name : 'IP Portfolio Management' %></div>
+        <div class="login-sub"><%= branding ? 'Client and staff portal' : 'Multi-agency platform' %></div>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+    <% flash.forEach(function (item) { %>
+      <div class="alert <%= item.type %>"><%= item.message %></div>
+    <% }) %>
+
+    <form method="post" action="/login">
+      <div class="field">
+        <label for="agency">Agency code</label>
+        <input type="text" id="agency" name="agency" value="<%= agency %>"
+               autocapitalize="characters" placeholder="ABC" autocomplete="organization">
+        <div class="hint">Leave blank to sign in as a platform administrator.</div>
+      </div>
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" value="<%= username %>" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center">Sign in</button>
+    </form>
+
+    <div class="demo-note">
+      Demo accounts, password <span class="mono">demo1234</span>
+      <table>
+        <tr><td>Agency ABC, administrator</td><td class="mono">admin</td></tr>
+        <tr><td>Agency ABC, examiner</td><td class="mono">examiner</td></tr>
+        <tr><td>Agency ABC, viewer</td><td class="mono">viewer</td></tr>
+        <tr><td>Agency ABC, client portal</td><td class="mono">kopje.user</td></tr>
+        <tr><td>Agency ZIMIPO, administrator</td><td class="mono">admin</td></tr>
+        <tr><td>Platform, no agency code</td><td class="mono">platform</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>
