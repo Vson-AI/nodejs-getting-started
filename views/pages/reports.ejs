@@ -1,0 +1,78 @@
+<%- include('../partials/head', { subtitle: isClient ? 'Scoped to ' + user.clientName : 'Scoped to ' + user.tenantName }) %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Portfolio</h2></div>
+      <div class="card-body">
+        <p class="muted small">Counts per IP type broken down by status.</p>
+        <a class="btn btn-primary" href="/reports/portfolio">Run report</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Expiring IP</h2></div>
+      <div class="card-body">
+        <form method="get" action="/reports/expiring">
+          <div class="field">
+            <label for="days">Look ahead, days</label>
+            <input type="number" id="days" name="days" value="90" min="1" max="3650">
+          </div>
+          <% if (!isClient && clients.length > 0) { %>
+            <div class="field">
+              <label for="client">Client</label>
+              <select id="client" name="client">
+                <option value="">All clients</option>
+                <% clients.forEach(function (c) { %><option value="<%= c.id %>"><%= c.name %></option><% }) %>
+              </select>
+            </div>
+          <% } %>
+          <button class="btn btn-primary" type="submit">Run report</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Upcoming docket</h2></div>
+      <div class="card-body">
+        <form method="get" action="/reports/upcoming">
+          <div class="field">
+            <label for="days2">Look ahead, days</label>
+            <input type="number" id="days2" name="days" value="30" min="1" max="3650">
+          </div>
+          <button class="btn btn-primary" type="submit">Run report</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Overdue docket</h2></div>
+      <div class="card-body">
+        <p class="muted small">Open entries past their due date.</p>
+        <a class="btn btn-primary" href="/reports/overdue">Run report</a>
+      </div>
+    </div>
+
+    <% if (!isClient) { %>
+      <div class="card">
+        <div class="card-head"><h2>Client snapshot</h2></div>
+        <div class="card-body">
+          <form method="get" action="/reports/snapshot">
+            <div class="field">
+              <label for="client2">Client</label>
+              <select id="client2" name="client" required>
+                <option value="">Choose a client</option>
+                <% clients.forEach(function (c) { %><option value="<%= c.id %>"><%= c.name %></option><% }) %>
+              </select>
+            </div>
+            <button class="btn btn-primary" type="submit">Run report</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

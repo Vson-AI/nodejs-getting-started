@@ -1,0 +1,82 @@
+<%
+function value (name) { return values[name] == null ? '' : String(values[name]) }
+function errorFor (name) {
+  var hit = errors.find(function (e) { return e.column === name })
+  return hit ? hit.message : null
+}
+%>
+<%- include('../partials/head', { subtitle: 'Creates the agency, its settings, its reference counters and its first administrator' }) %>
+
+<% if (errors.length > 0) { %>
+  <div class="alert error">
+    <ul><% errors.forEach(function (e) { %><li><%= e.message %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<form method="post" action="/platform/tenants">
+  <div class="card">
+    <div class="card-head"><h2>Agency</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="legal_name">Legal name</label>
+          <input type="text" id="legal_name" name="legal_name" value="<%= value('legal_name') %>" required>
+          <% if (errorFor('legal_name')) { %><div class="hint" style="color:var(--red)"><%= errorFor('legal_name') %></div><% } %>
+        </div>
+        <div class="field">
+          <label for="initials">Initials</label>
+          <input type="text" id="initials" name="initials" value="<%= value('initials') %>" maxlength="8" required>
+          <% if (errorFor('initials')) { %>
+            <div class="hint" style="color:var(--red)"><%= errorFor('initials') %></div>
+          <% } else { %>
+            <div class="hint">2 to 8 uppercase letters or digits. Appears in every reference.</div>
+          <% } %>
+        </div>
+        <div class="field">
+          <label for="contact_email">Contact email</label>
+          <input type="email" id="contact_email" name="contact_email" value="<%= value('contact_email') %>">
+        </div>
+        <div class="field">
+          <label for="contact_phone">Contact phone</label>
+          <input type="text" id="contact_phone" name="contact_phone" value="<%= value('contact_phone') %>">
+        </div>
+        <div class="field">
+          <label for="plan_id">Plan</label>
+          <select id="plan_id" name="plan_id">
+            <option value="">None</option>
+            <% plans.forEach(function (p) { %>
+              <option value="<%= p.id %>" <%= String(values.plan_id || '') === String(p.id) ? 'selected' : '' %>>
+                <%= p.name %>
+              </option>
+            <% }) %>
+          </select>
+          <div class="hint">Plan limits are enforced in phase 3.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>First administrator</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="admin_username">Username</label>
+          <input type="text" id="admin_username" name="admin_username" value="<%= value('admin_username') %>" required>
+          <% if (errorFor('admin_username')) { %><div class="hint" style="color:var(--red)"><%= errorFor('admin_username') %></div><% } %>
+        </div>
+        <div class="field">
+          <label for="admin_password">Temporary password</label>
+          <input type="text" id="admin_password" name="admin_password" placeholder="Leave blank to generate one">
+          <% if (errorFor('admin_password')) { %><div class="hint" style="color:var(--red)"><%= errorFor('admin_password') %></div><% } %>
+        </div>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-primary" type="submit">Provision tenant</button>
+        <a class="btn" href="/platform">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<%- include('../partials/foot') %>

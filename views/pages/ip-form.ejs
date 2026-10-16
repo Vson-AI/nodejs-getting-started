@@ -1,0 +1,109 @@
+<%
+var action = record ? '/ip/' + mod.slug + '/' + record.id : '/ip/' + mod.slug
+function value (name) {
+  var v = values[name]
+  if (v == null) return ''
+  if (Array.isArray(v)) return v.join(';')
+  if (v instanceof Date) return d(v)
+  if (name.endsWith('_date')) return d(v)
+  return String(v)
+}
+function errorFor (name) {
+  var hit = errors.find(function (e) { return e.column === name })
+  return hit ? hit.message : null
+}
+%>
+<%- include('../partials/head', { subtitle: record ? 'Reference stays fixed for the life of the record' : 'A reference is generated when you save' }) %>
+
+<% if (errors.length > 0) { %>
+  <div class="alert error">
+    Check these fields:
+    <ul>
+      <% errors.forEach(function (e) { %><li><%= e.message %></li><% }) %>
+    </ul>
+  </div>
+<% } %>
+
+<form method="post" action="<%= action %>">
+  <div class="card">
+    <div class="card-head"><h2><%= mod.label %> details</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <% if (record) { %>
+          <div class="field">
+            <label>Reference</label>
+            <div class="readonly ref"><%= record.three_eyes_ref %></div>
+            <div class="hint">System generated and immutable.</div>
+          </div>
+        <% } %>
+
+        <% mod.fields.forEach(function (f) { %>
+          <div class="field <%= (f.type === 'textarea' || f.type === 'countries') ? 'wide' : '' %>">
+            <label for="f_<%= f.name %>"><%= f.label %><%= f.required ? ' *' : '' %></label>
+
+            <% if (f.type === 'textarea') { %>
+              <textarea id="f_<%= f.name %>" name="<%= f.name %>"><%= value(f.name) %></textarea>
+
+            <% } else if (f.type === 'select') { %>
+              <select id="f_<%= f.name %>" name="<%= f.name %>">
+                <option value="">Choose</option>
+                <% (f.options || statuses).forEach(function (o) { %>
+                  <option value="<%= o %>" <%= value(f.name) === o ? 'selected' : '' %>><%= o %></option>
+                <% }) %>
+              </select>
+
+            <% } else if (f.type === 'date') { %>
+              <input type="date" id="f_<%= f.name %>" name="<%= f.name %>" value="<%= value(f.name) %>">
+
+            <% } else if (f.type === 'classes') { %>
+              <input type="text" id="f_<%= f.name %>" name="<%= f.name %>" value="<%= value(f.name) %>"
+                     placeholder="9;35;42">
+
+            <% } else if (f.type === 'countries') { %>
+              <% var chosen = String(value(f.name)).split(';').filter(Boolean) %>
+              <select id="f_<%= f.name %>" name="<%= f.name %>" multiple size="8">
+                <% countries.forEach(function (c) { %>
+                  <option value="<%= c.code %>" <%= chosen.indexOf(c.code) >= 0 ? 'selected' : '' %>>
+                    <%= c.name %> (<%= c.code %>)
+                  </option>
+                <% }) %>
+              </select>
+
+            <% } else { %>
+              <input type="text" id="f_<%= f.name %>" name="<%= f.name %>" value="<%= value(f.name) %>"
+                     <%= f.max ? 'maxlength=' + f.max : '' %>>
+            <% } %>
+
+            <% if (errorFor(f.name)) { %>
+              <div class="hint" style="color:var(--red)"><%= errorFor(f.name) %></div>
+            <% } else if (f.help) { %>
+              <div class="hint"><%= f.help %></div>
+            <% } %>
+          </div>
+        <% }) %>
+
+        <% if (can('ip.assign_client')) { %>
+          <div class="field">
+            <label for="client_id">Client</label>
+            <select id="client_id" name="client_id">
+              <option value="">Not assigned</option>
+              <% clients.forEach(function (c) { %>
+                <option value="<%= c.id %>" <%= String(values.client_id || '') === String(c.id) ? 'selected' : '' %>>
+                  <%= c.name %> (<%= c.code %>)
+                </option>
+              <% }) %>
+            </select>
+            <div class="hint">Only this client's portal users can see the record.</div>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="form-foot">
+        <button type="submit" class="btn btn-primary"><%= record ? 'Save changes' : 'Create record' %></button>
+        <a class="btn" href="<%= record ? '/ip/' + mod.slug + '/' + record.id : '/ip/' + mod.slug %>">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<%- include('../partials/foot') %>
