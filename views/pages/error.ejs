@@ -1,0 +1,30 @@
+<% if (typeof user !== 'undefined' && user) { %>
+  <%- include('../partials/head') %>
+  <div class="card">
+    <div class="card-body">
+      <h2><%= title %></h2>
+      <p class="muted"><%= message %></p>
+      <a href="/" class="btn">Back to dashboard</a>
+    </div>
+  </div>
+  <%- include('../partials/foot') %>
+<% } else { %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> | IP-PMS</title>
+  <link rel="stylesheet" href="/stylesheets/app.css">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <h2><%= title %></h2>
+    <p class="muted"><%= message %></p>
+    <a href="/login" class="btn btn-primary">Go to sign in</a>
+  </div>
+</div>
+</body>
+</html>
+<% } %>

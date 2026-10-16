@@ -1,0 +1,207 @@
+<%- include('../partials/head', { subtitle: tenant.legal_name + ' · initials ' + tenant.initials }) %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Outgoing mail</h2>
+        <span class="pill <%= settings.smtp_enabled ? 'ok' : '' %>"><%= settings.smtp_enabled ? 'Enabled' : 'Off' %></span>
+      </div>
+      <div class="card-body">
+        <form method="post" action="/settings/smtp">
+          <div class="form-grid">
+            <div class="field">
+              <label for="smtp_host">Host</label>
+              <input type="text" id="smtp_host" name="smtp_host" value="<%= settings.smtp_host || '' %>">
+            </div>
+            <div class="field">
+              <label for="smtp_port">Port</label>
+              <input type="number" id="smtp_port" name="smtp_port" value="<%= settings.smtp_port || 587 %>">
+            </div>
+            <div class="field">
+              <label for="smtp_user">Username</label>
+              <input type="text" id="smtp_user" name="smtp_user" value="<%= settings.smtp_user || '' %>">
+            </div>
+            <div class="field">
+              <label for="smtp_password">Password</label>
+              <input type="password" id="smtp_password" name="smtp_password"
+                     placeholder="<%= settings.has_password ? 'Stored encrypted. Type to replace.' : 'Not set' %>">
+              <div class="hint">Encrypted with AES-256-GCM under a key held outside the database.</div>
+            </div>
+            <div class="field">
+              <label for="smtp_from">From address</label>
+              <input type="text" id="smtp_from" name="smtp_from" value="<%= settings.smtp_from || '' %>">
+            </div>
+            <div class="field">
+              <label>Options</label>
+              <label class="check"><input type="checkbox" name="smtp_use_tls" <%= settings.smtp_use_tls ? 'checked' : '' %>> Require TLS</label>
+              <label class="check"><input type="checkbox" name="smtp_enabled" <%= settings.smtp_enabled ? 'checked' : '' %>> Enabled</label>
+            </div>
+          </div>
+          <div class="form-foot">
+            <button class="btn btn-primary" type="submit">Save mail settings</button>
+          </div>
+        </form>
+
+        <form method="post" action="/settings/smtp/test" style="margin-top:14px">
+          <div class="field">
+            <label for="test_to">Send a test message to</label>
+            <input type="email" id="test_to" name="test_to" value="<%= user.email || '' %>">
+          </div>
+          <button class="btn" type="submit">Send test email</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Files and thresholds</h2></div>
+      <div class="card-body">
+        <form method="post" action="/settings/files">
+          <div class="form-grid">
+            <div class="field">
+              <label for="file_base_dir">Base directory</label>
+              <input type="text" id="file_base_dir" name="file_base_dir" value="<%= settings.file_base_dir || '' %>"
+                     placeholder="/srv/ip-files/abc">
+            </div>
+            <div class="field">
+              <label for="file_cloud_prefix">Cloud prefix</label>
+              <input type="text" id="file_cloud_prefix" name="file_cloud_prefix" value="<%= settings.file_cloud_prefix || '' %>"
+                     placeholder="https://files.example.com/">
+            </div>
+            <div class="field">
+              <label for="brand_logo_url">Portal logo URL</label>
+              <input type="text" id="brand_logo_url" name="brand_logo_url" value="<%= settings.brand_logo_url || '' %>">
+              <div class="hint">Shown on the client sign in page.</div>
+            </div>
+            <div class="field">
+              <label for="docket_lookahead_days">Docket lookahead, days</label>
+              <input type="number" id="docket_lookahead_days" name="docket_lookahead_days" value="<%= settings.docket_lookahead_days || 30 %>">
+            </div>
+            <div class="field">
+              <label for="expiry_lookahead_days">Expiry lookahead, days</label>
+              <input type="number" id="expiry_lookahead_days" name="expiry_lookahead_days" value="<%= settings.expiry_lookahead_days || 90 %>">
+            </div>
+            <div class="field">
+              <label for="import_max_rows">Import row limit</label>
+              <input type="number" id="import_max_rows" name="import_max_rows" value="<%= settings.import_max_rows || 50000 %>">
+            </div>
+            <div class="field">
+              <label for="import_max_bytes">Upload size limit, bytes</label>
+              <input type="number" id="import_max_bytes" name="import_max_bytes" value="<%= settings.import_max_bytes || 20971520 %>">
+            </div>
+          </div>
+          <div class="form-foot">
+            <button class="btn btn-primary" type="submit">Save preferences</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Reference initials</h2></div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Current</dt><dd class="ref"><%= tenant.initials %>/&lt;type&gt;/&lt;year&gt;/&lt;sequence&gt;</dd>
+          <dt>IP records</dt><dd><%= number(ipRecordCount) %></dd>
+        </dl>
+        <% if (canRenameInitials) { %>
+          <form method="post" action="/settings/initials" style="margin-top:12px">
+            <div class="field">
+              <label for="initials">New initials</label>
+              <input type="text" id="initials" name="initials" value="<%= tenant.initials %>" maxlength="8">
+              <div class="hint">2 to 8 uppercase letters or digits. Locks once the first record exists.</div>
+            </div>
+            <button class="btn btn-primary" type="submit">Rename initials</button>
+          </form>
+        <% } else { %>
+          <div class="alert warn" style="margin:12px 0 0">
+            Initials are locked because this agency already holds IP records.
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Country list</h2></div>
+      <div class="card-body">
+        <p class="muted small">The ISO list is shared by every agency. These are your additions.</p>
+        <% if (tenantCountries.length > 0) { %>
+          <table class="table">
+            <tbody>
+              <% tenantCountries.forEach(function (c) { %>
+                <tr>
+                  <td class="mono"><%= c.code %></td>
+                  <td><%= c.name %></td>
+                  <td class="nowrap">
+                    <form method="post" action="/settings/countries/<%= c.id %>/delete">
+                      <button class="btn btn-sm" type="submit">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+        <form method="post" action="/settings/countries" style="margin-top:12px">
+          <div class="form-grid">
+            <div class="field">
+              <label for="code">Code</label>
+              <input type="text" id="code" name="code" maxlength="3" placeholder="ARP">
+            </div>
+            <div class="field">
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" placeholder="Regional office">
+            </div>
+          </div>
+          <button class="btn" type="submit">Add country</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Status lists</h2></div>
+      <div class="card-body">
+        <% if (tenantStatuses.length > 0) { %>
+          <table class="table">
+            <tbody>
+              <% tenantStatuses.forEach(function (s) { %>
+                <tr>
+                  <td class="small"><%= s.ip_type %></td>
+                  <td><%= s.value %></td>
+                  <td class="nowrap">
+                    <form method="post" action="/settings/statuses/<%= s.id %>/delete">
+                      <button class="btn btn-sm" type="submit">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <p class="muted small">You use the standard lists for every IP type.</p>
+        <% } %>
+        <form method="post" action="/settings/statuses" style="margin-top:12px">
+          <div class="form-grid">
+            <div class="field">
+              <label for="ip_type">IP type</label>
+              <select id="ip_type" name="ip_type">
+                <% Object.keys(globalStatuses).forEach(function (k) { %>
+                  <option value="<%= k %>"><%= k %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="field">
+              <label for="value">Status</label>
+              <input type="text" id="value" name="value" placeholder="Under appeal">
+            </div>
+          </div>
+          <button class="btn" type="submit">Add status</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

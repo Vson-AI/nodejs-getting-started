@@ -1,0 +1,100 @@
+<%
+var action = record ? '/docket/' + record.id : '/docket'
+function value (name) {
+  var v = values[name]
+  if (v == null) return ''
+  if (Array.isArray(v)) return v.join(';')
+  if (name.endsWith('_date')) return d(v)
+  return String(v)
+}
+function errorFor (name) {
+  var hit = errors.find(function (e) { return e.column === name })
+  return hit ? hit.message : null
+}
+%>
+<%- include('../partials/head', { subtitle: 'Links to any IP record in this agency' }) %>
+
+<% if (errors.length > 0) { %>
+  <div class="alert error">
+    Check these fields:
+    <ul><% errors.forEach(function (e) { %><li><%= e.message %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<form method="post" action="<%= action %>">
+  <div class="card">
+    <div class="card-head"><h2>Docket entry</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <% mod.fields.forEach(function (f) { %>
+          <div class="field <%= (f.type === 'textarea' || f.type === 'files') ? 'wide' : '' %>">
+            <label for="f_<%= f.name %>"><%= f.label %><%= f.required ? ' *' : '' %></label>
+
+            <% if (f.type === 'textarea') { %>
+              <textarea id="f_<%= f.name %>" name="<%= f.name %>"><%= value(f.name) %></textarea>
+
+            <% } else if (f.name === 'ip_type') { %>
+              <select id="f_ip_type" name="ip_type">
+                <option value="">Not linked</option>
+                <% ipModules.forEach(function (m) { %>
+                  <option value="<%= m.ipType %>" <%= value('ip_type') === m.ipType ? 'selected' : '' %>><%= m.label %></option>
+                <% }) %>
+              </select>
+
+            <% } else if (f.name === 'assigned_to') { %>
+              <select id="f_assigned_to" name="assigned_to">
+                <option value="">Unassigned</option>
+                <% assignees.forEach(function (u) { %>
+                  <option value="<%= u.username %>" <%= value('assigned_to') === u.username ? 'selected' : '' %>>
+                    <%= u.username %><%= u.full_name ? ' (' + u.full_name + ')' : '' %>
+                  </option>
+                <% }) %>
+              </select>
+
+            <% } else if (f.type === 'select') { %>
+              <select id="f_<%= f.name %>" name="<%= f.name %>">
+                <option value="">Choose</option>
+                <% (f.options || statuses).forEach(function (o) { %>
+                  <option value="<%= o %>" <%= value(f.name) === o ? 'selected' : '' %>><%= o %></option>
+                <% }) %>
+              </select>
+
+            <% } else if (f.type === 'date') { %>
+              <input type="date" id="f_<%= f.name %>" name="<%= f.name %>" value="<%= value(f.name) %>">
+
+            <% } else { %>
+              <input type="text" id="f_<%= f.name %>" name="<%= f.name %>" value="<%= value(f.name) %>"
+                     <%= f.max ? 'maxlength=' + f.max : '' %>
+                     placeholder="<%= f.name === 'ip_record_ref' ? user.tenantInitials + '/M/2025/000001' : '' %>">
+            <% } %>
+
+            <% if (errorFor(f.name)) { %>
+              <div class="hint" style="color:var(--red)"><%= errorFor(f.name) %></div>
+            <% } else if (f.help) { %>
+              <div class="hint"><%= f.help %></div>
+            <% } %>
+          </div>
+        <% }) %>
+
+        <div class="field">
+          <label for="client_id">Client</label>
+          <select id="client_id" name="client_id">
+            <option value="">Inherit from linked record</option>
+            <% clients.forEach(function (c) { %>
+              <option value="<%= c.id %>" <%= String(values.client_id || '') === String(c.id) ? 'selected' : '' %>>
+                <%= c.name %> (<%= c.code %>)
+              </option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-foot">
+        <button type="submit" class="btn btn-primary"><%= record ? 'Save changes' : 'Create entry' %></button>
+        <a class="btn" href="<%= record ? '/docket/' + record.id : '/docket' %>">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<%- include('../partials/foot') %>

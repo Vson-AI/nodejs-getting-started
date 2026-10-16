@@ -1,0 +1,103 @@
+<%
+function value (name) { return values[name] == null ? '' : String(values[name]) }
+function errorFor (name) {
+  var hit = errors.find(function (e) { return e.column === name })
+  return hit ? hit.message : null
+}
+var isSelf = target && target.id === user.id
+%>
+<%- include('../partials/head') %>
+
+<% if (errors.length > 0) { %>
+  <div class="alert error">
+    <ul><% errors.forEach(function (e) { %><li><%= e.message %></li><% }) %></ul>
+  </div>
+<% } %>
+
+<form method="post" action="<%= target ? '/users/' + target.id : '/users' %>">
+  <div class="card">
+    <div class="card-head"><h2>User</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="username">Username</label>
+          <% if (target) { %>
+            <div class="readonly mono"><%= target.username %></div>
+          <% } else { %>
+            <input type="text" id="username" name="username" value="<%= value('username') %>" required>
+            <% if (errorFor('username')) { %>
+              <div class="hint" style="color:var(--red)"><%= errorFor('username') %></div>
+            <% } %>
+          <% } %>
+        </div>
+        <div class="field">
+          <label for="full_name">Full name</label>
+          <input type="text" id="full_name" name="full_name" value="<%= value('full_name') %>">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="<%= value('email') %>">
+        </div>
+        <% if (!target) { %>
+          <div class="field">
+            <label for="password">Temporary password</label>
+            <input type="text" id="password" name="password" placeholder="Leave blank to generate one">
+            <% if (errorFor('password')) { %>
+              <div class="hint" style="color:var(--red)"><%= errorFor('password') %></div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="ACTIVE" <%= value('status') === 'ACTIVE' ? 'selected' : '' %>>Active</option>
+              <option value="INACTIVE" <%= value('status') === 'INACTIVE' ? 'selected' : '' %>>Inactive</option>
+            </select>
+          </div>
+        <% } %>
+      </div>
+
+      <% if (!target || target.user_type === 'STAFF') { %>
+        <div class="field">
+          <label>Roles</label>
+          <% if (isSelf) { %>
+            <div class="readonly"><%= roles.join(', ') %></div>
+            <div class="hint">You cannot change your own role.</div>
+          <% } else { %>
+            <% staffRoles.forEach(function (r) { %>
+              <label class="check" style="margin-bottom:4px">
+                <input type="checkbox" name="roles" value="<%= r %>" <%= roles.indexOf(r) >= 0 ? 'checked' : '' %>>
+                <span><%= r %></span>
+              </label>
+            <% }) %>
+            <% if (errorFor('roles')) { %>
+              <div class="hint" style="color:var(--red)"><%= errorFor('roles') %></div>
+            <% } %>
+          <% } %>
+        </div>
+      <% } %>
+
+      <div class="form-foot">
+        <button class="btn btn-primary" type="submit"><%= target ? 'Save changes' : 'Create user' %></button>
+        <a class="btn" href="/users">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-head"><h2>What each role may do</h2></div>
+  <div class="card-body tight">
+    <table class="table">
+      <thead><tr><th>Role</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td>ADMIN</td><td>Everything in the agency, including deletes, users, clients and settings</td></tr>
+        <tr><td>EXAMINER</td><td>Create and update records and docket entries, run imports, no deletes</td></tr>
+        <tr><td>VIEWER</td><td>Read the agency portfolio and the audit trail</td></tr>
+        <tr><td>AUDITOR</td><td>Read the audit trail only</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

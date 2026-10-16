@@ -1,0 +1,96 @@
+<%
+var actions = ''
+if (can('ip.create')) actions += '<a class="btn btn-primary" href="/ip/' + mod.slug + '/new">Add ' + mod.label.toLowerCase() + '</a>'
+if (can('template.download')) actions += '<a class="btn" href="/import/' + mod.slug + '/template.csv?variant=blank">Template</a>'
+if (can('data.export')) actions += '<a class="btn" href="/ip/' + mod.slug + '/export.csv' + qs(filters, { page: null }) + '">Export CSV</a>'
+if (can('import.run')) actions += '<a class="btn" href="/import/' + mod.slug + '">Import</a>'
+var listFields = mod.fields.filter(function (f) { return f.list })
+%>
+<%- include('../partials/head', { subtitle: mod.plural + ' held for ' + (user.clientName || user.tenantName), headerActions: actions }) %>
+
+<div class="card">
+  <form method="get" class="filters">
+    <div class="field">
+      <label for="q">Search</label>
+      <input type="search" id="q" name="q" value="<%= filters.q || '' %>" placeholder="Title, owner, reference">
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="">Any status</option>
+        <% statuses.forEach(function (s) { %>
+          <option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option>
+        <% }) %>
+      </select>
+    </div>
+    <% if (!isClient) { %>
+      <div class="field">
+        <label for="client">Client</label>
+        <select id="client" name="client">
+          <option value="">Any client</option>
+          <% clients.forEach(function (c) { %>
+            <option value="<%= c.id %>" <%= String(filters.client) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+    <% } %>
+    <div class="field">
+      <label for="from">Filed from</label>
+      <input type="date" id="from" name="from" value="<%= filters.from || '' %>">
+    </div>
+    <div class="field">
+      <label for="to">Filed to</label>
+      <input type="date" id="to" name="to" value="<%= filters.to || '' %>">
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Apply</button>
+      <a class="btn" href="/ip/<%= mod.slug %>">Clear</a>
+    </div>
+  </form>
+
+  <div class="card-body tight">
+    <% if (list.rows.length === 0) { %>
+      <div class="empty">No <%= mod.plural.toLowerCase() %> match these filters.</div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <% listFields.forEach(function (f) { %><th><%= f.label %></th><% }) %>
+              <% if (!isClient) { %><th>Client</th><% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% list.rows.forEach(function (row) { %>
+              <tr>
+                <td class="nowrap"><a class="ref" href="/ip/<%= mod.slug %>/<%= row.id %>"><%= row.three_eyes_ref %></a></td>
+                <% listFields.forEach(function (f) { %>
+                  <td>
+                    <% if (f.name === 'status') { %>
+                      <span class="pill <%= statusClass(row.status) %>"><%= row.status %></span>
+                    <% } else if (f.type === 'date') { %>
+                      <span class="nowrap"><%= d(row[f.name]) %></span>
+                    <% } else if (f.type === 'classes') { %>
+                      <%= (row.classes || []).join(', ') %>
+                    <% } else if (f.name === 'title') { %>
+                      <a href="/ip/<%= mod.slug %>/<%= row.id %>"><%= row.title %></a>
+                    <% } else { %>
+                      <%= listValue(row[f.name]) %>
+                    <% } %>
+                  </td>
+                <% }) %>
+                <% if (!isClient) { %>
+                  <td><%= row.client_name || '' %></td>
+                <% } %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+  <%- include('../partials/pagination', { list: list, page: page, query: filters }) %>
+</div>
+
+<%- include('../partials/foot') %>
