@@ -1,0 +1,148 @@
+<%
+var actions = ''
+if (can('docket.write')) actions += '<a class="btn" href="/docket/' + record.id + '/edit">Edit</a>'
+var ipSlug = null
+ipModules.forEach(function (m) { if (m.ipType === record.ip_type) ipSlug = m.slug })
+var late = !record.completed && daysUntil(record.due_date) < 0
+%>
+<%- include('../partials/head', { subtitle: record.ip_record_ref ? 'Linked to ' + record.ip_record_ref : 'Not linked to an IP record', headerActions: actions }) %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Entry</h2>
+        <span class="pill <%= record.completed ? 'ok' : (late ? 'bad' : 'warn') %>">
+          <%= record.completed ? 'Completed' : (late ? 'Overdue' : 'Open') %>
+        </span>
+      </div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Due date</dt>
+          <dd>
+            <%= d(record.due_date) %>
+            <% var n = daysUntil(record.due_date) %>
+            <span class="muted"><%= n < 0 ? Math.abs(n) + ' days ago' : 'in ' + n + ' days' %></span>
+          </dd>
+          <dt>Description</dt><dd><%= record.description || '-' %></dd>
+          <dt>Linked record</dt>
+          <dd>
+            <% if (record.ip_record_ref && ipSlug && record.ip_record_id) { %>
+              <a class="ref" href="/ip/<%= ipSlug %>/<%= record.ip_record_id %>"><%= record.ip_record_ref %></a>
+            <% } else { %>-<% } %>
+          </dd>
+          <dt>Client</dt><dd><%= record.client_name || 'Not assigned' %></dd>
+          <dt>Assignee</dt><dd><%= record.assigned_to || '-' %></dd>
+          <dt>Status</dt><dd><%= record.status || '-' %><%= record.status_date ? ' on ' + d(record.status_date) : '' %></dd>
+          <dt>Action due</dt><dd><%= record.action_due || '-' %><%= record.action_due_date ? ' by ' + d(record.action_due_date) : '' %></dd>
+          <dt>Priority</dt><dd><span class="pill <%= priorityClass(record.priority) %>"><%= record.priority %></span></dd>
+          <dt>Comments</dt><dd style="white-space:pre-wrap"><%= record.comments || '-' %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <% if (can('docket.write')) { %>
+      <div class="card">
+        <div class="card-head"><h2><%= record.completed ? 'Reopen' : 'Complete' %></h2></div>
+        <div class="card-body">
+          <% if (record.completed) { %>
+            <form method="post" action="/docket/<%= record.id %>/reopen">
+              <button class="btn" type="submit">Reopen entry</button>
+            </form>
+          <% } else { %>
+            <form method="post" action="/docket/<%= record.id %>/complete">
+              <div class="field">
+                <label for="comments">Closing comments</label>
+                <textarea id="comments" name="comments" placeholder="What was filed or paid"></textarea>
+              </div>
+              <button class="btn btn-primary" type="submit">Mark completed</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (can('docket.delete')) { %>
+      <div class="card">
+        <div class="card-body">
+          <form method="post" action="/docket/<%= record.id %>/delete"
+                onsubmit="return confirm('Delete this docket entry?')">
+            <button class="btn btn-danger" type="submit">Delete entry</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Attachments</h2></div>
+      <div class="card-body">
+        <% var docs = fileLinks(record.documents) %>
+        <h3>Documents</h3>
+        <% if (docs.length === 0) { %>
+          <p class="muted small">None recorded.</p>
+        <% } else { docs.forEach(function (doc) { %>
+          <% if (doc.type === 'url') { %>
+            <a class="doc-link" href="<%= doc.path %>" target="_blank" rel="noopener"><%= doc.path %></a>
+          <% } else { %>
+            <div class="doc-link mono muted"><%= doc.path %> <span class="tag">local path</span></div>
+          <% } %>
+        <% }) } %>
+
+        <h3 style="margin-top:14px">Reproduction</h3>
+        <% var repro = fileLinks(record.reproduction) %>
+        <% if (repro.length === 0) { %><p class="muted small">None recorded.</p><% } %>
+        <% repro.forEach(function (doc) { %>
+          <% if (doc.type === 'url') { %>
+            <a class="doc-link" href="<%= doc.path %>" target="_blank" rel="noopener"><%= doc.path %></a>
+          <% } else { %>
+            <div class="doc-link mono muted"><%= doc.path %> <span class="tag">local path</span></div>
+          <% } %>
+        <% }) %>
+
+        <h3 style="margin-top:14px">Certificate</h3>
+        <% var cert = fileLinks(record.certificate) %>
+        <% if (cert.length === 0) { %><p class="muted small">None recorded.</p><% } %>
+        <% cert.forEach(function (doc) { %>
+          <% if (doc.type === 'url') { %>
+            <a class="doc-link" href="<%= doc.path %>" target="_blank" rel="noopener"><%= doc.path %></a>
+          <% } else { %>
+            <div class="doc-link mono muted"><%= doc.path %> <span class="tag">local path</span></div>
+          <% } %>
+        <% }) %>
+
+        <p class="hint">Local paths are stored as references. Open them from the agency file server.</p>
+      </div>
+    </div>
+
+    <% if (can('audit.view')) { %>
+      <div class="card">
+        <div class="card-head">
+          <h2>History</h2>
+          <a class="btn btn-sm" href="/audit?module=DOCKET&amp;record_id=<%= record.id %>">Full trail</a>
+        </div>
+        <div class="card-body tight">
+          <% if (history.length === 0) { %>
+            <div class="empty">No audit entries yet.</div>
+          <% } else { %>
+            <table class="table">
+              <thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead>
+              <tbody>
+                <% history.forEach(function (row) { %>
+                  <tr>
+                    <td class="nowrap small"><%= dt(row.created_at) %></td>
+                    <td><%= row.username %></td>
+                    <td><span class="pill info"><%= row.action %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,80 @@
+<%- include('../partials/head', {
+  subtitle: job.file_name + ' · ' + job.module,
+  headerActions: '<a class="btn" href="/import/' + job.module + '">New import</a>'
+}) %>
+
+<% if (job.status === 'RUNNING') { %>
+  <meta http-equiv="refresh" content="3">
+  <div class="alert info">Running. This page refreshes every few seconds.</div>
+<% } %>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Result</h2>
+    <span class="pill <%= statusClass(job.status) %>"><%= job.status %></span>
+  </div>
+  <div class="card-body">
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-value"><%= number(job.rows_total) %></div><div class="kpi-label">Rows read</div></div>
+      <div class="kpi"><div class="kpi-value"><%= number(job.rows_inserted) %></div><div class="kpi-label">Created</div></div>
+      <div class="kpi"><div class="kpi-value"><%= number(job.rows_updated) %></div><div class="kpi-label">Updated</div></div>
+      <div class="kpi"><div class="kpi-value"><%= number(job.rows_skipped) %></div><div class="kpi-label">Skipped</div></div>
+      <div class="kpi <%= job.rows_failed > 0 ? 'alert' : '' %>">
+        <div class="kpi-value"><%= number(job.rows_failed) %></div><div class="kpi-label">Failed</div>
+      </div>
+    </div>
+
+    <% if (job.message) { %>
+      <div class="alert <%= job.rows_failed > 0 ? 'warn' : 'ok' %>" style="margin-top:14px"><%= job.message %></div>
+    <% } %>
+
+    <dl class="dl" style="margin-top:14px">
+      <dt>Mode</dt><dd><%= job.mode === 'DRY_RUN' ? 'Dry run, nothing written' : 'Commit' %><%= job.skip_invalid ? ', skipping invalid rows' : '' %></dd>
+      <dt>Run by</dt><dd><%= job.username %></dd>
+      <dt>Started</dt><dd><%= dt(job.started_at) %></dd>
+      <dt>Finished</dt><dd><%= job.finished_at ? dt(job.finished_at) : 'Still running' %></dd>
+      <dt>File hash</dt><dd class="mono small"><%= job.file_hash %></dd>
+    </dl>
+
+    <div class="form-foot">
+      <% if (errorCount > 0) { %>
+        <a class="btn" href="/import/jobs/<%= job.id %>/errors.csv">Download error report</a>
+      <% } %>
+      <% if (job.status === 'COMPLETED' && job.mode === 'DRY_RUN' && job.rows_failed === 0) { %>
+        <a class="btn btn-primary" href="/import/<%= job.module %>">Proceed to commit</a>
+      <% } %>
+      <% if (job.status === 'RUNNING' && can('import.cancel')) { %>
+        <form method="post" action="/import/jobs/<%= job.id %>/cancel">
+          <button class="btn btn-danger" type="submit">Cancel run</button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (errors.length > 0) { %>
+  <div class="card">
+    <div class="card-head">
+      <h2>Row errors</h2>
+      <span class="muted small">Showing <%= errors.length %> of <%= number(errorCount) %></span>
+    </div>
+    <div class="card-body tight">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th class="num">Row</th><th>Column</th><th>Message</th></tr></thead>
+          <tbody>
+            <% errors.forEach(function (e) { %>
+              <tr>
+                <td class="num"><%= e.row_number %></td>
+                <td class="mono small"><%= e.column_name || '' %></td>
+                <td><%= e.error_message %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/foot') %>

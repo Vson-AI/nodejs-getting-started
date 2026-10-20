@@ -1,0 +1,131 @@
+<%- include('../partials/head', {
+  subtitle: 'Initials ' + tenant.initials,
+  headerActions: '<a class="btn" href="/platform">All tenants</a>'
+}) %>
+
+<% if (newAccount) { %>
+  <div class="alert info">
+    New credentials, shown once.
+    <div class="mono" style="margin-top:6px">
+      agency <%= newAccount.agency || tenant.initials %> · user <%= newAccount.username %> · password <%= newAccount.password %>
+    </div>
+  </div>
+<% } %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Agency</h2>
+        <span class="pill <%= tenant.status === 'ACTIVE' ? 'ok' : 'bad' %>"><%= tenant.status %></span>
+      </div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Legal name</dt><dd><%= tenant.legal_name %></dd>
+          <dt>Initials</dt><dd class="mono"><%= tenant.initials %></dd>
+          <dt>Contact</dt><dd><%= tenant.contact_email || '-' %><%= tenant.contact_phone ? ' · ' + tenant.contact_phone : '' %></dd>
+          <dt>Created</dt><dd><%= dt(tenant.created_at) %></dd>
+          <dt>Sign in link</dt><dd class="mono small">/login?agency=<%= tenant.initials %></dd>
+        </dl>
+
+        <div class="form-foot">
+          <form method="post" action="/platform/tenants/<%= tenant.id %>/status">
+            <input type="hidden" name="status" value="<%= tenant.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' %>">
+            <button class="btn" type="submit"><%= tenant.status === 'ACTIVE' ? 'Suspend tenant' : 'Reactivate tenant' %></button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Reference counters</h2></div>
+      <div class="card-body tight">
+        <table class="table">
+          <thead><tr><th>Type</th><th>Records</th><th class="num">Last sequence</th></tr></thead>
+          <tbody>
+            <% counters.forEach(function (c) { %>
+              <tr>
+                <td class="mono"><%= c.type_code %></td>
+                <td class="small">
+                  <%= c.type_code === 'P' ? 'Patents' : c.type_code === 'U' ? 'Utility Models'
+                      : c.type_code === 'M' ? 'Trademarks' : c.type_code === 'C' ? 'Copyrights' : 'Industrial Designs' %>
+                </td>
+                <td class="num mono"><%= String(c.last_value).padStart(6, '0') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Hard delete</h2></div>
+      <div class="card-body">
+        <p class="muted small">Removes the agency, its users, clients, records, docket and audit history.</p>
+        <form method="post" action="/platform/tenants/<%= tenant.id %>/delete"
+              onsubmit="return confirm('Delete <%= tenant.legal_name %> and all of its data?')">
+          <div class="field">
+            <label for="confirm">Type <%= tenant.initials %> to confirm</label>
+            <input type="text" id="confirm" name="confirm" autocomplete="off">
+          </div>
+          <button class="btn btn-danger" type="submit">Delete tenant</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Portfolio size</h2></div>
+      <div class="card-body tight">
+        <table class="table">
+          <tbody>
+            <% Object.keys(counts).forEach(function (k) { %>
+              <tr><td><%= k %></td><td class="num"><%= number(counts[k]) %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Users</h2></div>
+      <div class="card-body tight">
+        <table class="table">
+          <thead><tr><th>Username</th><th>Type</th><th>Roles</th><th>Status</th></tr></thead>
+          <tbody>
+            <% users.forEach(function (u) { %>
+              <tr>
+                <td class="mono"><%= u.username %></td>
+                <td class="small"><%= u.user_type %></td>
+                <td class="small"><%= u.roles %></td>
+                <td><span class="pill <%= statusClass(u.status) %>"><%= u.status %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Add an administrator</h2></div>
+      <div class="card-body">
+        <form method="post" action="/platform/tenants/<%= tenant.id %>/admins">
+          <div class="form-grid">
+            <div class="field">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required>
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input type="text" id="password" name="password" placeholder="Leave blank to generate one">
+            </div>
+          </div>
+          <button class="btn" type="submit">Create administrator</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

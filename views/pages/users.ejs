@@ -1,0 +1,49 @@
+<%- include('../partials/head', {
+  subtitle: 'Staff and client portal accounts in this agency',
+  headerActions: '<a class="btn btn-primary" href="/users/new">Add user</a>'
+}) %>
+
+<% if (newAccount) { %>
+  <div class="alert info">
+    New credentials, shown once.
+    <div class="mono" style="margin-top:6px">
+      agency <%= user.tenantInitials %> · user <%= newAccount.username %> · password <%= newAccount.password %>
+    </div>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Username</th><th>Name</th><th>Type</th><th>Roles</th><th>Client</th>
+              <th>Last sign in</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% users.forEach(function (u) { %>
+            <tr>
+              <td class="mono"><%= u.username %></td>
+              <td><%= u.full_name || '' %></td>
+              <td><span class="pill <%= u.user_type === 'CLIENT' ? 'info' : '' %>"><%= u.user_type %></span></td>
+              <td class="small"><%= u.roles %></td>
+              <td><%= u.client_name || '' %></td>
+              <td class="small"><%= u.last_login_at ? dt(u.last_login_at) : 'Never' %></td>
+              <td><span class="pill <%= statusClass(u.status) %>"><%= u.status %></span></td>
+              <td class="nowrap">
+                <a class="btn btn-sm" href="/users/<%= u.id %>/edit">Edit</a>
+                <form method="post" action="/users/<%= u.id %>/password" style="display:inline">
+                  <button class="btn btn-sm" type="submit">Reset password</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<p class="hint">Client portal accounts are created from the client record, so they always belong to one client.</p>
+
+<%- include('../partials/foot') %>

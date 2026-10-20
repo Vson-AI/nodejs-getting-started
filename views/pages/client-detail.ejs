@@ -1,0 +1,143 @@
+<%- include('../partials/head', {
+  subtitle: 'Client code ' + client.code,
+  headerActions: '<a class="btn" href="/clients/' + client.id + '/edit">Edit</a>'
+}) %>
+
+<% if (newAccount) { %>
+  <div class="alert info">
+    Give these credentials to the client once. The password is not shown again.
+    <div class="mono" style="margin-top:6px">
+      agency <%= user.tenantInitials %> · user <%= newAccount.username %> · password <%= newAccount.password %>
+    </div>
+  </div>
+<% } %>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Details</h2>
+        <span class="pill <%= statusClass(client.status) %>"><%= client.status %></span>
+      </div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Name</dt><dd><%= client.name %></dd>
+          <dt>Code</dt><dd class="mono"><%= client.code %></dd>
+          <dt>Contact person</dt><dd><%= client.contact_person || '-' %></dd>
+          <dt>Email</dt><dd><%= client.email || '-' %></dd>
+          <dt>Phone</dt><dd><%= client.phone || '-' %></dd>
+          <dt>Address</dt><dd><%= client.address || '-' %></dd>
+          <dt>Tax number</dt><dd><%= client.tax_number || '-' %></dd>
+          <dt>Notes</dt><dd style="white-space:pre-wrap"><%= client.notes || '-' %></dd>
+        </dl>
+
+        <div class="form-foot">
+          <form method="post" action="/clients/<%= client.id %>/status">
+            <input type="hidden" name="status" value="<%= client.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' %>">
+            <button class="btn" type="submit">
+              <%= client.status === 'ACTIVE' ? 'Deactivate client' : 'Reactivate client' %>
+            </button>
+          </form>
+          <form method="post" action="/clients/<%= client.id %>/delete"
+                onsubmit="return confirm('Remove <%= client.code %>? IP records keep their link and history.')">
+            <button class="btn btn-danger" type="submit">Remove client</button>
+          </form>
+        </div>
+        <p class="hint">Deactivating disables every portal account and leaves IP records linked.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Portfolio</h2>
+        <a class="btn btn-sm" href="/reports/snapshot?client=<%= client.id %>">Snapshot report</a>
+      </div>
+      <div class="card-body tight">
+        <% if (portfolio.length === 0) { %>
+          <div class="empty">No IP records are assigned to this client.</div>
+        <% } else { %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Type</th><th>Reference</th><th>Title</th><th>Status</th><th>Expiry</th></tr></thead>
+              <tbody>
+                <% portfolio.forEach(function (row) { %>
+                  <tr>
+                    <td><%= row.ip_type %></td>
+                    <td class="ref"><%= row.three_eyes_ref %></td>
+                    <td><%= row.title %></td>
+                    <td><span class="pill <%= statusClass(row.status) %>"><%= row.status %></span></td>
+                    <td class="nowrap"><%= d(row.expiry_date) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Portal accounts</h2></div>
+      <div class="card-body tight">
+        <% if (accounts.length === 0) { %>
+          <div class="empty">No portal accounts yet.</div>
+        <% } else { %>
+          <table class="table">
+            <thead><tr><th>Username</th><th>Last sign in</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <% accounts.forEach(function (a) { %>
+                <tr>
+                  <td>
+                    <span class="mono"><%= a.username %></span>
+                    <% if (a.full_name) { %><div class="muted small"><%= a.full_name %></div><% } %>
+                  </td>
+                  <td class="small"><%= a.last_login_at ? dt(a.last_login_at) : 'Never' %></td>
+                  <td><span class="pill <%= statusClass(a.status) %>"><%= a.status %></span></td>
+                  <td class="nowrap">
+                    <form method="post" action="/clients/<%= client.id %>/accounts/<%= a.id %>/status" style="display:inline">
+                      <input type="hidden" name="status" value="<%= a.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' %>">
+                      <button class="btn btn-sm" type="submit"><%= a.status === 'ACTIVE' ? 'Revoke' : 'Enable' %></button>
+                    </form>
+                    <form method="post" action="/clients/<%= client.id %>/accounts/<%= a.id %>/password" style="display:inline">
+                      <button class="btn btn-sm" type="submit">Reset password</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Issue a portal account</h2></div>
+      <div class="card-body">
+        <form method="post" action="/clients/<%= client.id %>/accounts">
+          <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required placeholder="<%= client.code.toLowerCase() %>.user">
+          </div>
+          <div class="field">
+            <label for="full_name">Full name</label>
+            <input type="text" id="full_name" name="full_name">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="<%= client.email || '' %>">
+          </div>
+          <div class="field">
+            <label for="password">Temporary password</label>
+            <input type="text" id="password" name="password" placeholder="Leave blank to generate one">
+            <div class="hint">Read-only access to this client's records and docket.</div>
+          </div>
+          <button class="btn btn-primary" type="submit">Create account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

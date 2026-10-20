@@ -1,0 +1,36 @@
+<%- include('../partials/head', {
+  subtitle: 'Client entities and their portal accounts',
+  headerActions: '<a class="btn btn-primary" href="/clients/new">Add client</a>'
+}) %>
+
+<div class="card">
+  <div class="card-body tight">
+    <% if (clients.length === 0) { %>
+      <div class="empty">No clients yet. Add one to start assigning IP records.</div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Code</th><th>Client</th><th>Contact</th><th>Email</th>
+                <th class="num">Records</th><th class="num">Portal accounts</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <% clients.forEach(function (c) { %>
+              <tr>
+                <td class="mono"><%= c.code %></td>
+                <td><a href="/clients/<%= c.id %>"><%= c.name %></a></td>
+                <td><%= c.contact_person || '' %></td>
+                <td><%= c.email || '' %></td>
+                <td class="num"><%= number(totals.get(String(c.id)) || 0) %></td>
+                <td class="num"><%= c.portal_accounts %></td>
+                <td><span class="pill <%= statusClass(c.status) %>"><%= c.status %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
