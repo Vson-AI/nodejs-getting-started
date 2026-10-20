@@ -1,0 +1,107 @@
+<%- include('../partials/head', {
+  subtitle: 'Tenant provisioning and platform health',
+  headerActions: '<a class="btn btn-primary" href="/platform/tenants/new">Provision tenant</a>'
+}) %>
+
+<% if (newAccount) { %>
+  <div class="alert info">
+    New credentials, shown once.
+    <div class="mono" style="margin-top:6px">
+      <%= newAccount.agency ? 'agency ' + newAccount.agency + ' · ' : '' %>user <%= newAccount.username %> · password <%= newAccount.password %>
+    </div>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-head"><h2>Tenants</h2></div>
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Initials</th><th>Legal name</th><th>Plan</th><th class="num">Staff</th>
+              <th class="num">Clients</th><th class="num">Portal users</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% tenants.forEach(function (t) { %>
+            <tr>
+              <td class="mono"><%= t.initials %></td>
+              <td><a href="/platform/tenants/<%= t.id %>"><%= t.legal_name %></a></td>
+              <td class="small"><%= t.plan_name || 'None' %></td>
+              <td class="num"><%= t.staff_count %></td>
+              <td class="num"><%= t.client_count %></td>
+              <td class="num"><%= t.portal_count %></td>
+              <td><span class="pill <%= t.status === 'ACTIVE' ? 'ok' : 'bad' %>"><%= t.status %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-top:16px">
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Audit archive</h2></div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Retention</dt><dd><%= retentionYears %> years</dd>
+          <dt>Last run</dt><dd><%= lastArchive ? dt(lastArchive) : 'Never' %></dd>
+          <dt>Schedule</dt><dd>Checked daily, archives when the last run is over 28 days old</dd>
+        </dl>
+        <form method="post" action="/platform/archive" style="margin-top:12px">
+          <button class="btn" type="submit">Run archive now</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Add a platform administrator</h2></div>
+      <div class="card-body">
+        <form method="post" action="/platform/admins">
+          <div class="form-grid">
+            <div class="field">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required>
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input type="text" id="password" name="password" placeholder="Leave blank to generate one">
+            </div>
+          </div>
+          <button class="btn" type="submit">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-head"><h2>Recent sign in attempts</h2></div>
+      <div class="card-body tight">
+        <% if (recentLogins.length === 0) { %>
+          <div class="empty">No sign in attempts recorded.</div>
+        <% } else { %>
+          <table class="table">
+            <thead><tr><th>When</th><th>Agency</th><th>User</th><th>Result</th></tr></thead>
+            <tbody>
+              <% recentLogins.forEach(function (l) { %>
+                <tr>
+                  <td class="nowrap small"><%= dt(l.created_at) %></td>
+                  <td class="mono small"><%= l.initials || 'platform' %></td>
+                  <td class="small"><%= l.username || '' %></td>
+                  <td>
+                    <span class="pill <%= l.succeeded ? 'ok' : 'bad' %>"><%= l.succeeded ? 'Signed in' : 'Refused' %></span>
+                    <% if (!l.succeeded && l.reason) { %><div class="muted small"><%= l.reason %></div><% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>
